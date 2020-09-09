@@ -1,0 +1,203 @@
+<?xml version="1.0"?>
+
+<!--
+  =======================================================================
+    Project build file
+  =======================================================================
+-->
+<project name="XmlConfig" default="build" basedir=".">
+
+  <property file=".ant.properties" />
+  <property file="${user.home}/.ant.properties" />
+
+  <property name="Name" value="XmlConfig"/>
+  <property name="name" value="xmlconfig"/>
+  <property name="version" value="1.5.0"/>
+
+  <property name="debug" value="true" />
+  <property name="deprecation" value="false" />
+  <property name="optimize" value="true" />
+
+  <!--
+    ===================================================================
+      Set the properties related to the source tree
+    ===================================================================
+  -->
+  <property name="ant.dir" value="ant"/>
+  <property name="src.dir" value="src"/>
+  <property name="java.dir" value="${src.dir}/main"/>
+  <property name="lib.dir" value="lib"/>
+  <property name="doc.dir" value="doc"/>
+  <property name="tests.dir" value="${src.dir}/test"/>
+  <property name="project.packages" value="fi.iki.asb.util.config"/>
+  <property name="manifest" value="${src.dir}/etc/manifest"/>
+
+  <!--
+    ===================================================================
+      Set the properties for the build area
+    ===================================================================
+  -->
+  <property name="build.dir" value="build"/>
+  <property name="bootstrap.dir" value="bootstrap"/>
+  <property name="build.classes" value="${build.dir}/classes"/>
+  <property name="build.lib" value="${build.dir}/lib"/>
+  <property name="build.javadocs" value="${build.dir}/javadocs"/>
+  <property name="build.tests" value="${build.dir}/tests"/>
+
+  <path id="classpath">
+    <pathelement location="${ant.dir}/lib/crimson.jar" />
+    <pathelement location="${ant.dir}/lib/jaxp.jar" />
+    <pathelement location="${lib.dir}/jdom.jar" />
+    <pathelement location="${lib.dir}/junit.jar" />
+  </path>
+
+  <path id="tests-classpath">
+    <pathelement location="${build.classes}" />
+    <pathelement location="${build.tests}" />
+    <pathelement location="${tests.dir}" />
+    <path refid="classpath" />
+  </path>
+
+  <!--
+    ===================================================================
+      Prepare the build
+    ===================================================================
+  -->
+  <target name="prepare">
+    <tstamp>
+      <format property="year" pattern="yyyy" />
+    </tstamp>
+    <filterset id="project.filters">
+      <filter token="VERSION" value="${version}" />
+      <filter token="DATE" value="${TODAY}" />
+      <filter token="TIME" value="${TSTAMP}" />
+    </filterset>
+  </target>
+
+  <!--
+    ===================================================================
+      Build the code
+    ===================================================================
+  -->
+  <target name="compile"
+          depends="prepare"
+          description="--> compiles the source code">
+    <mkdir dir="${build.dir}"/>
+    <mkdir dir="${build.classes}"/>
+    <mkdir dir="${build.tests}"/>
+    <mkdir dir="${build.lib}"/>
+
+    <!-- Compile main tree -->
+    <javac srcdir="${java.dir}"
+           destdir="${build.classes}"
+           debug="${debug}"
+           deprecation="${deprecation}"
+           optimize="${optimize}" >
+      <classpath refid="classpath" />
+    </javac>
+
+    <!-- Copy additional files -->
+    <copy todir="${build.classes}"
+          overwrite="true">
+      <fileset dir="${java.dir}">
+        <include name="**/version.txt" />
+      </fileset>
+      <fileset dir="${doc.dir}">
+        <include name="license" />
+      </fileset>
+      <filterset refid="project.filters"/>
+    </copy>
+
+    <!-- Compile test tree -->
+    <javac srcdir="${tests.dir}"
+           destdir="${build.tests}"
+           debug="${debug}"
+           deprecation="${deprecation}"
+           optimize="${optimize}" >
+      <classpath refid="tests-classpath" />
+    </javac>
+  </target>
+
+  <!--
+    ===================================================================
+      Run JUnit tests
+    ===================================================================
+  -->
+  <target name="test"
+          depends="build"
+          description="--> run tests">
+
+    <java classname="fi.iki.asb.util.config.TestEverything" fork="true">
+      <classpath>
+        <path refid="tests-classpath" />
+      </classpath>
+    </java>
+  </target>
+
+  <!--
+    ===================================================================
+      Create the ant jars: ant.jar and optional.jar
+    ===================================================================
+  -->
+  <target name="build"
+          depends="compile"
+          description="--> creates the jar files">
+
+    <jar jarfile="${build.lib}/${name}.jar"
+         basedir="${build.classes}"
+         manifest="${manifest}">
+    </jar>
+  </target>
+
+  <!--
+    ===================================================================
+      Cleans up build and distribution directories
+    ===================================================================
+  -->
+  <target name="clean"
+          description="--> cleans up build and dist directories">
+    <delete dir="${build.dir}" />
+    <delete>
+      <fileset dir="." includes="**/*~" defaultexcludes="no"/>
+    </delete>
+  </target>
+
+  <!--
+    ===================================================================
+      Creates the API documentation
+    ===================================================================
+  -->
+  <target name="javadocs" depends="prepare"
+          description="--> creates the API documentation">
+    <mkdir dir="${build.javadocs}"/>
+    <javadoc packagenames="${project.packages}"
+             useexternalfile="yes"
+             sourcepath="${java.dir}"
+             destdir="${build.javadocs}"
+             author="true"
+             version="true"
+             windowtitle="${Name} API"
+             doctitle="${Name}">
+      <bottom>Copyright &#169; ${year} Your Name. All Rights Reserved.</bottom>
+    </javadoc>
+  </target>
+
+  <!--
+    ===================================================================
+      Dump system information
+    ===================================================================
+  -->
+  <target name="info"
+          description="--> prints system information">
+    <echo message="java.vm.info=${java.vm.info}" />
+    <echo message="java.vm.name=${java.vm.name}" />
+    <echo message="java.vm.vendor=${java.vm.vendor}" />
+    <echo message="java.vm.version=${java.vm.version}" />
+    <echo message="os.arch=${os.arch}" />
+    <echo message="os.name=${os.name}" />
+    <echo message="os.version=${os.version}" />
+    <echo message="file.encoding=${file.encoding}" />
+    <echo message="user.language=${user.language}" />
+  </target>
+
+</project>
